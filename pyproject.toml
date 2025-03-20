@@ -1,0 +1,10 @@
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.115.11"
+uvicorn = {extras = ["standart"], version = "^0.34.0"}
+pydantic = {extras = ["all"], version = "^2.10.6"}
+pydantic-settings = "^2.8.1"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.39"}
