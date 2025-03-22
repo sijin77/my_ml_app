@@ -1,7 +1,3 @@
-from transaction import Transaction
-from request_history import RequestHistory
-
-
 class User:
     def __init__(
         self,
@@ -47,12 +43,6 @@ class User:
     def password_hash(self) -> str:
         return self.__password_hash
 
-    @password_hash.setter
-    def password_hash(self, value: str):
-        if value is None or value.strip() == "":
-            raise ValueError("пароль не может быть пустым")
-        self.__password_hash = value
-
     @property
     def balance(self) -> float:
         return self.__balance
@@ -64,13 +54,3 @@ class User:
     @property
     def request_history(self) -> list:
         return self.__request_history
-
-    # Методы для добавления
-    def add_transaction(self, transaction: Transaction):
-        self.__transactions.append(transaction)
-
-    def add_request_history(self, request: RequestHistory):
-        self.__request_history.append(request)
-
-    def update_balance(self, amount: float):
-        self.__balance += amount
