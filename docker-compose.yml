@@ -2,14 +2,14 @@ version: '3.8'
 
 services:
   app:
-    build: .
+    build: ./app
     env_file: 
       - .env  # Для секретных переменных
     environment:
       - APP_CONFIG_PATH=/app/config/settings.yaml  # Путь к YAML-конфигу
     volumes:
-      - ./src:/app
-      - ./src/config:/app/config  # Монтируем папку с конфигами
+      - ./app:/app
+      - ./app/config:/app/config  # Монтируем папку с конфигами
     depends_on:
       - database
       - rabbitmq
@@ -21,8 +21,7 @@ services:
       - "443:443"
     depends_on:
       - app
-    restart: unless-stopped
-
+  
   rabbitmq:
     image: rabbitmq:management
     ports:
@@ -33,7 +32,7 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-user}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
-    restart: always
+    restart: unless-stopped
 
   database:
     image: postgres:15
