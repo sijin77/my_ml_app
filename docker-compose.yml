@@ -32,7 +32,7 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-user}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
-    restart: unless-stopped
+    restart: on-failure
 
   database:
     image: postgres:15
@@ -44,6 +44,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+
 
 volumes:
   postgres_data:
