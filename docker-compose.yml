@@ -5,14 +5,11 @@ services:
     build: ./app
     env_file: 
       - .env  # Для секретных переменных
-    environment:
-      - APP_CONFIG_PATH=/app/config/settings.yaml  # Путь к YAML-конфигу
     volumes:
       - ./app:/app
-      - ./app/config:/app/config  # Монтируем папку с конфигами
     depends_on:
       - database
-      - rabbitmq
+      # - rabbitmq
 
   web-proxy:
     build: ./nginx
@@ -22,25 +19,27 @@ services:
     depends_on:
       - app
   
-  rabbitmq:
-    image: rabbitmq:management
-    ports:
-      - "15672:15672"
-      - "5672:5672"
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-user}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
-    restart: on-failure
+  # rabbitmq:
+  #   image: rabbitmq:management
+  #   ports:
+  #     - "15672:15672"
+  #     - "5672:5672"
+  #   volumes:
+  #     - rabbitmq_data:/var/lib/rabbitmq
+  #   environment:
+  #     RABBITMQ_DEFAULT_USER: "user"
+  #     RABBITMQ_DEFAULT_PASS: "user"
+  #   restart: on-failure
 
   database:
     image: postgres:15
     env_file: .env
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-myapp}
-      POSTGRES_USER: ${POSTGRES_USER:-user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -49,5 +48,5 @@ services:
 volumes:
   postgres_data:
     driver: local
-  rabbitmq_data:
-    driver: local
+  # rabbitmq_data:
+  #   driver: local

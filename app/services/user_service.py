@@ -1,47 +1,64 @@
-import bcrypt
-from models.user import User
-from models.transaction import Transaction
-from models.request_history import RequestHistory
+from decimal import Decimal
+from typing import Optional
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from repositories.user_repository import UserRepository
+from schemas.user import UserCreateDTO, UserDTO, UserUpdateDTO  # , UserWithRelationsDTO
+from utils.password import verify_password
 
 
 class UserService:
-    @staticmethod
-    def hash_password(password: str) -> str:
-        if password is None or password.strip() == "":
-            raise ValueError("Пароль не может быть пустым")
-        salt = bcrypt.gensalt()
-        hashed_password = bcrypt.hashpw(password.encode("utf-8"), salt)
-        return hashed_password.decode("utf-8")
+    def __init__(self, session: AsyncSession):
+        self.repository = UserRepository(session)
 
-    @staticmethod
-    def verify_password(password: str, hashed_password: str) -> bool:
-        if password is None or password.strip() == "":
-            raise ValueError("Пароль не может быть пустым")
-        return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
+    async def create_user(self, user_data: UserCreateDTO) -> UserDTO:
+        if await self.repository.get_by_username(user_data.username):
+            raise ValueError("Username already exists")
 
-    @staticmethod
-    def create_user(
-        user_id: int, username: str, email: str, password: str, balance: float = 0.0
-    ) -> "User":
-        if password is None or password.strip() == "":
-            raise ValueError("Пароль не может быть пустым")
-        hashed_password = UserService.hash_password(password)
-        return User(user_id, username, email, hashed_password, balance)
+        if await self.repository.get_by_email(user_data.email):
+            raise ValueError("Email already exists")
 
-    @staticmethod
-    def update_balance(user: "User", amount: float):
-        if amount is None:
-            raise ValueError("Сумма не может быть None")
-        user._User__balance += amount
+        user = await self.repository.create(user_data)
+        return UserDTO.model_validate(user)
 
-    @staticmethod
-    def add_transaction(user: "User", transaction: "Transaction"):
-        if transaction is None:
-            raise ValueError("Транзакция не может быть None")
-        user._User__transactions.append(transaction)
+    async def get_user(self, user_id: int) -> Optional[UserDTO]:
+        user = await self.repository.get_by_id(user_id)
+        return UserDTO.model_validate(user) if user else None
 
-    @staticmethod
-    def add_request_history(user: "User", request: "RequestHistory"):
-        if request is None:
-            raise ValueError("Запрос не может быть None")
-        user._User__request_history.append(request)
+    # async def get_user_with_relations(
+    #     self, user_id: int
+    # ) -> Optional[UserWithRelationsDTO]:
+    #     user = await self.repository.get_by_id(user_id)
+    #     return UserWithRelationsDTO.model_validate(user) if user else None
+
+    async def get_users(self, skip: int = 0, limit: int = 100) -> list[UserDTO]:
+        users = await self.repository.get_all(skip, limit)
+        return [UserDTO.model_validate(user) for user in users]
+
+    async def update_user(
+        self, user_id: int, user_data: UserUpdateDTO
+    ) -> Optional[UserDTO]:
+        if user_data.email:
+            existing_user = await self.repository.get_by_email(user_data.email)
+            if existing_user and existing_user.id != user_id:
+                raise ValueError("Email already in use")
+
+        user = await self.repository.update(user_id, user_data)
+        return UserDTO.model_validate(user) if user else None
+
+    async def delete_user(self, user_id: int) -> bool:
+        return await self.repository.delete(user_id)
+
+    async def authenticate_user(
+        self, username: str, password: str
+    ) -> Optional[UserDTO]:
+        user = await self.repository.get_by_username(username)
+        if not user or not verify_password(password, user.password_hash):
+            return None
+        return UserDTO.model_validate(user)
+
+    async def update_user_balance(
+        self, user_id: int, amount: Decimal
+    ) -> Optional[UserDTO]:
+        user = await self.repository.update_balance(user_id, amount)
+        return UserDTO.model_validate(user) if user else None

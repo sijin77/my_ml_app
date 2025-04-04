@@ -3,6 +3,7 @@ FROM python:3.10-slim
 
 # 2. Рабочая директория
 WORKDIR /app
+ENV PYTHONPATH=/app
 
 # 3. Копируем файл зависимостей
 COPY requirements.txt /app/
