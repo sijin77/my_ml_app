@@ -6,13 +6,13 @@ from db.base_model import Base, BaseMixin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .transaction import Transaction_DB
-    from .request_history import RequestHistory_DB
-    from .user_roles import UserRole_DB
-    from .user_action_history import UserActionHistory_DB
+    from .transaction import TransactionDB
+    from .request_history import RequestHistoryDB
+    from .user_roles import UserRoleDB
+    from .user_action_history import UserActionHistoryDB
 
 
-class User_DB(Base, BaseMixin):
+class UserDB(Base, BaseMixin):
     repr_cols = ("username", "email", "is_active")
     repr_cols_num = 3
 
@@ -31,19 +31,22 @@ class User_DB(Base, BaseMixin):
     balance: Mapped[Decimal] = mapped_column(
         Numeric(12, 2), default=Decimal("0.00"), comment="Баланс пользователя"
     )
+    is_active: Mapped[bool] = mapped_column(
+        default=True, comment="Флаг активности пользователя"
+    )
 
     # Связи с другими моделями
-    transactions: Mapped[List["Transaction_DB"]] = relationship(
+    transactions: Mapped[List["TransactionDB"]] = relationship(
         back_populates="user",
         lazy="selectin",
-        order_by="desc(Transaction_DB.created_at)",
+        order_by="desc(TransactionDB.created_at)",
     )
-    request_history: Mapped[List["RequestHistory_DB"]] = relationship(
+    request_history: Mapped[List["RequestHistoryDB"]] = relationship(
         back_populates="user", lazy="selectin"
     )
-    roles: Mapped[List["UserRole_DB"]] = relationship(
+    roles: Mapped[List["UserRoleDB"]] = relationship(
         back_populates="user", lazy="selectin"
     )
-    actions_history: Mapped[list["UserActionHistory_DB"]] = relationship(
+    actions_history: Mapped[list["UserActionHistoryDB"]] = relationship(
         back_populates="user"  # Обратная ссылка
     )

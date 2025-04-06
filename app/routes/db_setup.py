@@ -3,13 +3,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, inspect
 from db.base_model import Base
 from db.session import async_engine, get_async_db
-from db.models.user import User_DB
-from db.models.user_roles import UserRole_DB
-from db.models.mlmodel import MLModel_DB
-from db.models.mlmodel_settings import MLModelSettings_DB
-from db.models.request_history import RequestHistory_DB
-from db.models.transaction import Transaction_DB
-from db.models.user_action_history import UserActionHistory_DB
+from db.models.user import UserDB
+from db.models.user_roles import UserRoleDB
+from db.models.mlmodel import MLModelDB
+from db.models.mlmodel_settings import MLModelSettingsDB
+from db.models.request_history import RequestHistoryDB
+from db.models.transaction import TransactionDB
+from db.models.user_action_history import UserActionHistoryDB
 import os
 
 router = APIRouter(
@@ -18,13 +18,13 @@ router = APIRouter(
 )
 
 MODELS = [
-    User_DB,
-    UserRole_DB,
-    MLModel_DB,
-    MLModelSettings_DB,
-    RequestHistory_DB,
-    Transaction_DB,
-    UserActionHistory_DB,
+    UserDB,
+    UserRoleDB,
+    MLModelDB,
+    MLModelSettingsDB,
+    RequestHistoryDB,
+    TransactionDB,
+    UserActionHistoryDB,
 ]
 
 

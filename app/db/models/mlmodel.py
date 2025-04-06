@@ -8,25 +8,25 @@ from ..base_model import Base, BaseMixin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .mlmodel_settings import MLModelSettings_DB
-    from .request_history import RequestHistory_DB
+    from .mlmodel_settings import MLModelSettingsDB
+    from .request_history import RequestHistoryDB
 
 
-class ModelInputType_DB(str, Enum):
+class ModelInputTypeDB(str, Enum):
     TEXT = "text"
     IMAGE = "image"
     TABULAR = "tabular"
     AUDIO = "audio"
 
 
-class ModelOutputType_DB(str, Enum):
+class ModelOutputTypeDB(str, Enum):
     CLASSIFICATION = "classification"
     REGRESSION = "regression"
     GENERATION = "generation"
     DETECTION = "detection"
 
 
-class MLModel_DB(Base, BaseMixin):
+class MLModelDB(Base, BaseMixin):
     repr_cols = ("name", "version", "status")
     name: Mapped[str] = mapped_column(
         String(100),
@@ -37,11 +37,11 @@ class MLModel_DB(Base, BaseMixin):
         String(20), default="1.0.0", comment="Версия в формате"
     )
 
-    input_type: Mapped[ModelInputType_DB] = mapped_column(
-        SQLEnum(ModelInputType_DB), comment="Тип входных данных"
+    input_type: Mapped[ModelInputTypeDB] = mapped_column(
+        SQLEnum(ModelInputTypeDB), comment="Тип входных данных"
     )
-    output_type: Mapped[ModelOutputType_DB] = mapped_column(
-        SQLEnum(ModelOutputType_DB), comment="Тип выходных данных"
+    output_type: Mapped[ModelOutputTypeDB] = mapped_column(
+        SQLEnum(ModelOutputTypeDB), comment="Тип выходных данных"
     )
 
     cost_per_request: Mapped[Decimal] = mapped_column(
@@ -54,13 +54,13 @@ class MLModel_DB(Base, BaseMixin):
     config: Mapped[Dict[str, Any]] = mapped_column(
         JSON, default={}, comment="Конфигурация модели в JSON"
     )
-    settings: Mapped[List["MLModelSettings_DB"]] = relationship(
+    settings: Mapped[List["MLModelSettingsDB"]] = relationship(
         back_populates="mlmodel", cascade="all, delete-orphan", lazy="selectin"
     )
-    request_history: Mapped[List["RequestHistory_DB"]] = relationship(
+    request_history: Mapped[List["RequestHistoryDB"]] = relationship(
         back_populates="mlmodel",
         lazy="dynamic",
-        order_by="desc(RequestHistory_DB.created_at)",
+        order_by="desc(RequestHistoryDB.created_at)",
     )
 
     def calculate_cost(self, requests_count: int) -> Decimal:

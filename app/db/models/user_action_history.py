@@ -1,17 +1,19 @@
 from enum import Enum
 from typing import Optional
 from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from db.base_model import Base, BaseMixin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .user import User_DB
+    from user import UserDB
 
 
-class ActionType_DB(str, Enum):
+class ActionTypeDB(str, Enum):
     """Типы действий пользователя"""
 
+    REGISTRATION = "registration"
     LOGIN = "login"
     LOGOUT = "logout"
     PROFILE_UPDATE = "profile_update"
@@ -21,9 +23,9 @@ class ActionType_DB(str, Enum):
     CUSTOM = "custom"
 
 
-class UserActionHistory_DB(Base, BaseMixin):
-    action_type: Mapped[ActionType_DB] = mapped_column(
-        comment="Тип выполненного действия"
+class UserActionHistoryDB(Base, BaseMixin):
+    action_type: Mapped[ActionTypeDB] = mapped_column(
+        SQLEnum(ActionTypeDB), nullable=False, comment="Тип выполненного действия"
     )
 
     action_details: Mapped[Optional[str]] = mapped_column(
@@ -41,9 +43,9 @@ class UserActionHistory_DB(Base, BaseMixin):
     )
 
     user_id: Mapped[int] = mapped_column(
-        ForeignKey("user_db.id"), nullable=False, comment="ID пользователя"
+        ForeignKey("userdb.id"), nullable=False, comment="ID пользователя"
     )
-    user: Mapped["User_DB"] = relationship(
+    user: Mapped["UserDB"] = relationship(
         back_populates="actions_history", lazy="joined"
     )
 

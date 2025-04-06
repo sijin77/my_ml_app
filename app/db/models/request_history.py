@@ -8,16 +8,16 @@ from ..base_model import Base, BaseMixin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .user import User_DB
-    from .mlmodel import MLModel_DB
+    from .user import UserDB
+    from .mlmodel import MLModelDB
 
 
-class RequestType_DB(str, Enum):
+class RequestTypeDB(str, Enum):
     PREDICTION = "prediction"
     CUSTOM = "custom"
 
 
-class RequestStatus_DB(str, Enum):
+class RequestStatusDB(str, Enum):
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
@@ -25,13 +25,13 @@ class RequestStatus_DB(str, Enum):
     CANCELLED = "cancelled"
 
 
-class RequestHistory_DB(Base, BaseMixin):
+class RequestHistoryDB(Base, BaseMixin):
 
-    request_type: Mapped[RequestType_DB] = mapped_column(
-        SQLEnum(RequestType_DB), nullable=False, comment="Тип ML-запроса"
+    request_type: Mapped[RequestTypeDB] = mapped_column(
+        SQLEnum(RequestTypeDB), nullable=False, comment="Тип ML-запроса"
     )
-    user_id: Mapped[int] = mapped_column(ForeignKey("user_db.id"), nullable=False)
-    model_id: Mapped[int] = mapped_column(ForeignKey("mlmodel_db.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("userdb.id"), nullable=False)
+    model_id: Mapped[int] = mapped_column(ForeignKey("mlmodeldb.id"), nullable=False)
 
     # Входные/выходные данные
     input_data: Mapped[str] = mapped_column(
@@ -53,20 +53,20 @@ class RequestHistory_DB(Base, BaseMixin):
     )
 
     # Статус
-    status: Mapped[RequestStatus_DB] = mapped_column(
-        SQLEnum(RequestStatus_DB),
-        default=RequestStatus_DB.PENDING,
+    status: Mapped[RequestStatusDB] = mapped_column(
+        SQLEnum(RequestStatusDB),
+        default=RequestStatusDB.PENDING,
         comment="Текущий статус выполнения",
     )
 
     # Связи
-    user: Mapped["User_DB"] = relationship(
+    user: Mapped["UserDB"] = relationship(
         back_populates="request_history", lazy="joined"
     )
-    mlmodel: Mapped["MLModel_DB"] = relationship(
+    mlmodel: Mapped["MLModelDB"] = relationship(
         back_populates="request_history", lazy="joined"
     )
 
     def mark_as_failed(self, error_msg: str = ""):
-        self.status = RequestStatus_DB.FAILED
+        self.status = RequestStatusDB.FAILED
         self.output_metrics = error_msg or "Unknown error"

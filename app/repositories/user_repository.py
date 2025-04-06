@@ -1,7 +1,7 @@
 from decimal import Decimal
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.models.user import User_DB
+from db.models.user import UserDB
 from schemas.user import UserCreateDTO, UserUpdateDTO
 from utils.password import get_password_hash
 
@@ -10,9 +10,9 @@ class UserRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create(self, user_data: UserCreateDTO) -> User_DB:
+    async def create(self, user_data: UserCreateDTO) -> UserDB:
         hashed_password = get_password_hash(user_data.password)
-        user = User_DB(
+        user = UserDB(
             username=user_data.username,
             email=user_data.email,
             password_hash=hashed_password,
@@ -22,29 +22,25 @@ class UserRepository:
         await self.session.refresh(user)
         return user
 
-    async def get_by_id(self, user_id: int) -> User_DB | None:
+    async def get_by_id(self, user_id: int) -> UserDB | None:
+        result = await self.session.execute(select(UserDB).where(UserDB.id == user_id))
+        return result.scalar_one_or_none()
+
+    async def get_by_username(self, username: str) -> UserDB | None:
         result = await self.session.execute(
-            select(User_DB).where(User_DB.id == user_id)
+            select(UserDB).where(UserDB.username == username)
         )
         return result.scalar_one_or_none()
 
-    async def get_by_username(self, username: str) -> User_DB | None:
-        result = await self.session.execute(
-            select(User_DB).where(User_DB.username == username)
-        )
+    async def get_by_email(self, email: str) -> UserDB | None:
+        result = await self.session.execute(select(UserDB).where(UserDB.email == email))
         return result.scalar_one_or_none()
 
-    async def get_by_email(self, email: str) -> User_DB | None:
-        result = await self.session.execute(
-            select(User_DB).where(User_DB.email == email)
-        )
-        return result.scalar_one_or_none()
-
-    async def get_all(self, skip: int = 0, limit: int = 100) -> list[User_DB]:
-        result = await self.session.execute(select(User_DB).offset(skip).limit(limit))
+    async def get_all(self, skip: int = 0, limit: int = 100) -> list[UserDB]:
+        result = await self.session.execute(select(UserDB).offset(skip).limit(limit))
         return result.scalars().all()
 
-    async def update(self, user_id: int, user_data: UserUpdateDTO) -> User_DB | None:
+    async def update(self, user_id: int, user_data: UserUpdateDTO) -> UserDB | None:
         update_data = user_data.model_dump(exclude_unset=True)
 
         if "password" in update_data:
@@ -53,17 +49,17 @@ class UserRepository:
             )
 
         await self.session.execute(
-            update(User_DB).where(User_DB.id == user_id).values(**update_data)
+            update(UserDB).where(UserDB.id == user_id).values(**update_data)
         )
         await self.session.commit()
         return await self.get_by_id(user_id)
 
     async def delete(self, user_id: int) -> bool:
-        await self.session.execute(delete(User_DB).where(User_DB.id == user_id))
+        await self.session.execute(delete(UserDB).where(UserDB.id == user_id))
         await self.session.commit()
         return True
 
-    async def update_balance(self, user_id: int, amount: Decimal) -> User_DB | None:
+    async def update_balance(self, user_id: int, amount: Decimal) -> UserDB | None:
         user = await self.get_by_id(user_id)
         if not user:
             return None

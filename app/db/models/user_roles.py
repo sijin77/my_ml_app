@@ -5,7 +5,7 @@ from db.base_model import Base, BaseMixin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .user import User_DB
+    from .user import UserDB
 
 
 class Roles(str, Enum):
@@ -18,12 +18,12 @@ class Roles(str, Enum):
     SUPPORT = "support"
 
 
-class UserRole_DB(Base, BaseMixin):
+class UserRoleDB(Base, BaseMixin):
     user_id: Mapped[int] = mapped_column(
-        ForeignKey("user_db.id"), nullable=False, comment="ID пользователя"
+        ForeignKey("userdb.id"), nullable=False, comment="ID пользователя"
     )
     role: Mapped[Roles] = mapped_column(SQLEnum(Roles), comment="Роль пользователя")
     is_active: Mapped[bool] = mapped_column(default=True)
 
     # Связи
-    user: Mapped["User_DB"] = relationship(back_populates="roles")
+    user: Mapped["UserDB"] = relationship(back_populates="roles")

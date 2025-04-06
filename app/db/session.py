@@ -3,12 +3,13 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from contextlib import asynccontextmanager
 from config.config import get_settings
+from db.base_model import Base
 
 settings = get_settings()
 # Create async engine
 async_engine = create_async_engine(
     settings.DATABASE_URL_asyncpg,
-    echo=True,
+    echo=False,
     pool_size=20,
     max_overflow=30,
     pool_pre_ping=True,
@@ -40,9 +41,12 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-async def get_async_session() -> AsyncSession:
-    """
-    Создает и возвращает новую асинхронную сессию без контекстного менеджера.
-    Позволяет более гибко управлять жизненным циклом сессии.
-    """
-    return AsyncSessionLocal()
+async def init_db():
+    try:
+        async with async_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+            await conn.run_sync(Base.metadata.create_all)
+        print("Database initialized successfully")
+    except Exception as e:
+        print(f"Error initializing database: {e}")
+        raise

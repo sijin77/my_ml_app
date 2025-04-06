@@ -1,48 +1,94 @@
-from typing import Optional, List
-from pydantic import field_validator, BaseModel
-from datetime import datetime
 from decimal import Decimal
+from datetime import datetime
+from typing import List, Optional
+from pydantic import BaseModel, ConfigDict, EmailStr
+from db.models.user_action_history import ActionTypeDB  # Предполагается, что это есть
+from db.models.user_roles import Roles  # Предполагается, что это есть
 
 
-class UserCreateDTO(BaseModel):
+# Базовые DTO
+class UserBase(BaseModel):
     username: str
-    email: str
-    password: str  # Will be hashed before storage
-
-    @field_validator("username")
-    def username_length(cls, v):
-        if len(v) < 3 or len(v) > 50:
-            raise ValueError("Username must be between 3 and 50 characters")
-        return v
+    email: EmailStr
+    balance: Decimal = Decimal("0.00")
 
 
-class UserUpdateDTO(BaseModel):
-    email: Optional[str] = None
-    password: Optional[str] = None  # need be hashed before storage
+# DTO для создания пользователя
+class UserCreate(UserBase):
+    password: str  # Пароль в открытом виде (для регистрации)
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "username": "johndoe",
+                "email": "john@example.com",
+                "password": "securepassword123",
+                "balance": "100.00",
+            }
+        }
+    )
+
+
+# DTO для обновления пользователя
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
     balance: Optional[Decimal] = None
+    password: Optional[str] = None  # Для смены пароля
 
 
-class UserDTO(BaseModel):
+# DTO для безопасного чтения (без пароля)
+class UserRead(UserBase):
     id: int
-    username: str
-    email: str
     is_active: bool
-    balance: Decimal
     created_at: datetime
-    updated_at: datetime | None
+    updated_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
 
 
-class UserWithPasswordDTO(UserDTO):
-    password_hash: str  # Only for internal use
+# DTO для детального просмотра с зависимостями
+class UserDetailRead(UserRead):
+    roles: List["UserRoleRead"] = []
+    actions_history: List["UserActionRead"] = []
+    transactions: List["TransactionRead"] = []
+    request_history: List["RequestHistoryRead"] = []
+    model_config = ConfigDict(from_attributes=True)
 
 
-class UserLoginDTO(BaseModel):
+# DTO для аутентификации
+class UserLogin(BaseModel):
     username: str
     password: str
 
 
-# class UserWithRelationsDTO(UserDTO):
-#     transactions: List[TransactionDTO] = []
-#     request_history: List[RequestHistoryDTO] = []
-#     roles: List[UserRoleDTO] = []
-#     actions_history: List[UserActionHistoryDTO] = []
+# DTO для ответа с токеном
+class UserWithToken(UserRead):
+    access_token: str
+    token_type: str = "bearer"
+
+
+# Вспомогательные DTO (должны быть определены в соответствующих модулях)
+class UserRoleRead(BaseModel):
+    role: Roles
+    is_active: bool
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserActionRead(BaseModel):
+    action_type: ActionTypeDB
+    status: str
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TransactionRead(BaseModel):
+    amount: Decimal
+    status: str
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RequestHistoryRead(BaseModel):
+    endpoint: Optional[str] = None
+    method: str
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)

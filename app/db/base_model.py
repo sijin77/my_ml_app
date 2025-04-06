@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from sqlalchemy import func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.orm import declared_attr
 
@@ -25,9 +26,11 @@ class BaseMixin:
 
     id: Mapped[int] = mapped_column(primary_key=True)
     created_at: Mapped[datetime] = mapped_column(
-        default=lambda: datetime.now(timezone.utc)
+        server_default=func.now(),  # Используем SQL-функцию вместо Python
+        default=None,  # Для явного указания, что значение генерируется БД
     )
     updated_at: Mapped[datetime] = mapped_column(
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        server_default=func.now(),
+        onupdate=func.now(),  # Обновляется средствами БД
+        default=None,
     )

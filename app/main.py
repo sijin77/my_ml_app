@@ -1,8 +1,9 @@
 import uvicorn
 from fastapi import FastAPI
 from routes.db_setup import router as db_router
-from routes.users import router as users_router
-import os
+from routes.users_route import router as users_router
+from db.session import get_async_db, init_db
+from tests.seed_data import async_seed_and_test, AsyncTestDataSeeder
 
 app = FastAPI(
     title="ML Model API",
@@ -28,49 +29,20 @@ async def root():
     """Возвращает основную информацию о API и доступных эндпоинтах"""
     return {
         "app": "ML Model Management API",
-        "version": app.version,
-        "environment": os.getenv("ENVIRONMENT", "development"),
-        "endpoints": {
-            "database": {
-                "create_tables": {
-                    "method": "POST",
-                    "path": "/api/db/create_tables",
-                    "description": "Создание всех таблиц в базе данных",
-                },
-                "drop_tables": {
-                    "method": "DELETE",
-                    "path": "/api/db/drop_tables",
-                    "description": "Удаление всех таблиц (только для разработки)",
-                    "warning": "Требуется ?confirm=true",
-                },
-                "healthcheck": {
-                    "method": "GET",
-                    "path": "/api/db/health",
-                    "description": "Проверка состояния базы данных",
-                },
-            },
-            "users": {
-                "seed_users": {
-                    "method": "POST",
-                    "path": "/api/users/seed",
-                    "description": "Заполнение тестовыми пользователями",
-                }
-            },
-            "documentation": {
-                "swagger": "/api/docs",
-                "redoc": "/api/redoc",
-                "openapi_schema": "/api/openapi.json",
-            },
-        },
-        "instructions": {
-            "quick_start": [
-                "1. Создать таблицы: POST /api/db/create_tables",
-                "2. Заполнить тестовыми данными: POST /api/users/seed",
-                "3. Проверить состояние: GET /api/db/health",
-            ],
-            "warning": "Эндпоинты удаления и заполнения тестовыми данными должны быть отключены в production",
+        "documentation": {
+            "swagger": "/api/docs",
+            "redoc": "/api/redoc",
+            "openapi_schema": "/api/openapi.json",
         },
     }
+
+
+@app.on_event("startup")
+async def on_startup():
+
+    await init_db()
+    async with get_async_db() as session:
+        await async_seed_and_test(session)
 
 
 @app.on_event("shutdown")

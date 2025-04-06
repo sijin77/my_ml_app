@@ -4,14 +4,14 @@ from ..base_model import Base, BaseMixin
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .mlmodel import MLModel_DB
+    from .mlmodel import MLModelDB
 
 
-class MLModelSettings_DB(Base, BaseMixin):
+class MLModelSettingsDB(Base, BaseMixin):
     repr_cols = ("model_id", "parameter", "parameter_value")
 
     model_id: Mapped[int] = mapped_column(
-        ForeignKey("mlmodel_db.id", ondelete="CASCADE"),
+        ForeignKey("mlmodeldb.id", ondelete="CASCADE"),
         nullable=False,
         comment="ID связанной модели",
     )
@@ -24,6 +24,6 @@ class MLModelSettings_DB(Base, BaseMixin):
     )
 
     # Связи
-    mlmodel: Mapped["MLModel_DB"] = relationship(
+    mlmodel: Mapped["MLModelDB"] = relationship(
         back_populates="settings", lazy="joined"
     )
