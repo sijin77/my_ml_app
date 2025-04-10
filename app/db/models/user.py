@@ -1,6 +1,6 @@
 from decimal import Decimal
 from typing import List
-from sqlalchemy import String, Numeric
+from sqlalchemy import String, Numeric, desc
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from db.base_model import Base, BaseMixin
 from typing import TYPE_CHECKING
@@ -36,10 +36,9 @@ class UserDB(Base, BaseMixin):
     )
 
     # Связи с другими моделями
+
     transactions: Mapped[List["TransactionDB"]] = relationship(
-        back_populates="user",
-        lazy="selectin",
-        order_by="desc(TransactionDB.created_at)",
+        back_populates="user", lazy="selectin"
     )
     request_history: Mapped[List["RequestHistoryDB"]] = relationship(
         back_populates="user", lazy="selectin"

@@ -37,7 +37,6 @@ class TransactionUpdate(BaseModel):
 class TransactionRead(TransactionBase):
     id: int
     created_at: datetime
-    updated_at: Optional[datetime] = None
     is_completed: bool  # Вычисляемое свойство
     model_config = ConfigDict(from_attributes=True)
 

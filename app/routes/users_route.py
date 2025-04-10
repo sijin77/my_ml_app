@@ -1,90 +1,76 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from typing import List, Optional
-from fastapi import Depends, APIRouter, HTTPException
-from sqlalchemy.orm import Session
-from schemas.user import UserCreate, UserWithToken, UserRead, UserLogin, UserDetailRead
-from schemas.user_roles import UserRoleCreate, UserRoleRead, UserRoleUpdate
-from services.dependencies import get_async_db
+from decimal import Decimal
+from datetime import timedelta
+from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from services.dependencies import get_user_service, get_user_roles_service
+from services.user_action_history_service import UserActionHistoryService
+from db.models.user import UserDB
+from db.session import get_async_db
 from services.user_service import UserService
 from services.user_roles_service import UserRolesService
+from schemas.user_roles import UserRoleCreate, UserRoleRead
+from schemas.user import (
+    UserCreate,
+    UserRead,
+    UserLogin,
+    UserUpdate,
+    UserWithToken,
+    UserDetailRead,
+    UserActionRead,
+)
 
-router = APIRouter(prefix="/users")
+router = APIRouter(prefix="/users", tags=["users"])
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/login")
 
 
+# routers.py
 @router.post("/register", response_model=UserRead)
-async def register(user_data: UserCreate, db: Session = Depends(get_async_db)):
-    return UserService(db).register_user(user_data)
-
-
-@router.post("/login", response_model=UserWithToken)
-async def login(login_data: UserLogin, db: Session = Depends(get_async_db)):
-    return UserService(db).authenticate_user(login_data)
-
-
-@router.get("/{user_id}", response_model=UserDetailRead)
-async def get_user(user_id: int, db: Session = Depends(get_async_db)):
-    return UserService(db).get_user_by_id(user_id)
-
-
-"""------router User Roles ------------------------"""
-router = APIRouter(prefix="/user-roles")
-
-
-@router.post("/", response_model=UserRoleRead)
-async def assign_role(role_data: UserRoleCreate, db: Session = Depends(get_async_db)):
+async def register_user(
+    user_data: UserCreate, user_service: UserService = Depends(get_user_service)
+):
     try:
-        return UserRolesService(db).assign_role_to_user(role_data)
+        return await user_service.register_user(user_data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/user/{user_id}", response_model=List[UserRoleRead])
-async def get_user_roles(user_id: int, db: Session = Depends(get_async_db)):
-    return UserRolesService(db).get_user_roles(user_id)
-
-
-@router.patch("/{role_id}", response_model=UserRoleRead)
-async def update_role(
-    role_id: int, role_data: UserRoleUpdate, db: Session = Depends(get_async_db)
+@router.post("/login", response_model=UserWithToken)
+async def login(
+    form_data: UserLogin,
+    user_service: UserService = Depends(get_user_service),
 ):
-    result = UserRolesService(db).update_user_role(role_id, role_data)
-    if not result:
-        raise HTTPException(status_code=404, detail="Role not found")
-    return result
+    try:
+        return await user_service.authenticate_user(
+            UserLogin(username=form_data.username, password=form_data.password)
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
-"""------router Action History ------------------------"""
-from schemas.user_action_history import (
-    UserActionHistoryCreate,
-    UserActionHistoryRead,
-    UserActionHistoryReadWithUser,
-)
-from services.user_action_history_service import UserActionHistoryService
-
-router = APIRouter(prefix="/user-actions")
-
-
-@router.post("/", response_model=UserActionHistoryRead)
-async def create_action(
-    action_data: UserActionHistoryCreate, db: Session = Depends(get_async_db)
+@router.post("/users/{user_id}/roles", response_model=UserRoleRead)
+async def assign_role(
+    user_id: int,
+    role_data: UserRoleCreate,
+    roles_service: UserRolesService = Depends(get_user_roles_service),
 ):
-    return UserActionHistoryService(db).create_action(action_data)
+    try:
+        return await roles_service.assign_role_to_user(role_data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/user/{user_id}", response_model=List[UserActionHistoryReadWithUser])
-async def get_user_actions(
-    user_id: int, limit: int = 100, db: Session = Depends(get_async_db)
-):
-    return UserActionHistoryService(db).get_user_actions(
-        user_id=user_id, limit=limit, include_user=True
-    )
-
-
-@router.get("/recent", response_model=List[UserActionHistoryReadWithUser])
-async def get_recent_actions(
-    action_type: Optional[str] = None,
-    limit: int = 100,
-    db: Session = Depends(get_async_db),
-):
-    return UserActionHistoryService(db).get_recent_actions(
-        action_type=action_type, limit=limit, include_user=True
-    )
+# @router.post("/users/{user_id}/actions/log")
+# async def log_user_action(
+#     user_id: int,
+#     action_type: str,
+#     status: str = "success",
+#     service: UserActionHistoryService = Depends(get_action_history_service),
+# ):
+#     return await service.log_action(
+#         user_id=user_id, action_type=action_type, status=status
+#     )

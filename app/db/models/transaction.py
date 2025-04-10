@@ -45,7 +45,6 @@ class TransactionDB(Base, BaseMixin):
     # Связи с другими моделями
     user: Mapped["UserDB"] = relationship(back_populates="transactions", lazy="joined")
     related_transaction: Mapped[Optional["TransactionDB"]] = relationship(
-        "TransactionDB",
         remote_side="TransactionDB.id",
         back_populates="child_transactions",
         lazy="selectin",

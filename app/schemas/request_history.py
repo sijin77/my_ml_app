@@ -68,5 +68,4 @@ class RequestHistoryRead(RequestHistoryBase):
 class RequestHistoryDetailRead(RequestHistoryRead):
     user: Optional["UserRead"] = None
     mlmodel: Optional["MLModelRead"] = None
-
     model_config = ConfigDict(from_attributes=True)
