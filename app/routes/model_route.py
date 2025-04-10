@@ -14,7 +14,7 @@ from services.dependencies import get_mlmodel_service, get_request_history_servi
 router = APIRouter(prefix="/ml-models", tags=["ml model"])
 
 
-@router.post("/create_model", response_model=MLModelRead)
+@router.post("/model", response_model=MLModelRead)
 async def create_model(
     model_data: MLModelCreate,
     mlmodel_service: MLModelService = Depends(get_mlmodel_service),
@@ -25,7 +25,7 @@ async def create_model(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/request_to_model", response_model=RequestHistoryRead)
+@router.post("/prediction", response_model=RequestHistoryRead)
 async def create_request(
     request_data: RequestHistoryCreate,
     request_service: RequestHistoryService = Depends(get_request_history_service),
@@ -36,7 +36,7 @@ async def create_request(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/user/{user_id}/reqests", response_model=List[RequestHistoryRead])
+@router.get("/user/{user_id}/prediction", response_model=List[RequestHistoryRead])
 async def get_user_requests(
     user_id: int,
     request_service: RequestHistoryService = Depends(get_request_history_service),

@@ -1,12 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from typing import List, Optional
+from typing import Dict, List, Optional
 from decimal import Decimal
 from datetime import timedelta
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from services.dependencies import get_user_service, get_user_roles_service
+from services.request_history_service import RequestHistoryService
+from services.dependencies import (
+    get_request_history_service,
+    get_user_service,
+    get_user_roles_service,
+)
 from services.user_action_history_service import UserActionHistoryService
 from db.models.user import UserDB
 from db.session import get_async_db
@@ -29,7 +34,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/login")
 
 
 # routers.py
-@router.post("/register", response_model=UserRead)
+@router.post("/signup", response_model=UserRead)
 async def register_user(
     user_data: UserCreate, user_service: UserService = Depends(get_user_service)
 ):
@@ -60,6 +65,28 @@ async def assign_role(
 ):
     try:
         return await roles_service.assign_role_to_user(role_data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/users/{user_id}", response_model=UserRead)
+async def get_user_info(
+    user_id: int,
+    user_service: UserService = Depends(get_user_service),
+):
+    try:
+        return await user_service.get_user_by_id(user_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/users/{user_id}/stats", response_model=Dict[str, Decimal])
+async def get_user_stats(
+    user_id: int,
+    request_service: RequestHistoryService = Depends(get_request_history_service),
+):
+    try:
+        return await request_service.get_user_stats(user_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
