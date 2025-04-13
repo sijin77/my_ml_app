@@ -30,7 +30,7 @@ class RequestHistoryCreate(RequestHistoryBase):
         json_schema_extra={
             "example": {
                 "request_type": "prediction",
-                "input_data": "{...}",
+                "input_data": "Привет, как дела?",
                 "user_id": 1,
                 "model_id": 1,
             }
@@ -48,7 +48,11 @@ class RequestHistoryUpdate(BaseModel):
 
     model_config = ConfigDict(
         json_schema_extra={
-            "example": {"status": "completed", "output_data": "{...}", "cost": "10.50"}
+            "example": {
+                "status": "completed",
+                "output_data": "Ответ от модели",
+                "cost": "10.50",
+            }
         }
     )
 

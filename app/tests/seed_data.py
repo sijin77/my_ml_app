@@ -90,11 +90,11 @@ class AsyncTestDataSeeder:
         print("Seeding ML models...")
         models = [
             MLModelCreate(
-                name="Text Classifier",
+                name="Qwen/Qwen2-VL-2B-Instruct",
                 input_type="text",
-                output_type="classification",
+                output_type="generation",
                 cost_per_request=Decimal("0.05"),
-                description="Text classification model",
+                description="Text generation model",
             ),
             MLModelCreate(
                 name="Image Recognizer",

@@ -19,7 +19,7 @@ app = FastAPI(
 app.include_router(users_router)
 app.include_router(model_router)
 app.include_router(transaction_router)
-# app.include_router(db_router)
+app.include_router(db_router)
 
 
 @app.get(

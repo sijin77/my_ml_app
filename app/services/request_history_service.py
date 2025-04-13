@@ -1,8 +1,5 @@
-from datetime import datetime, timezone
 from decimal import Decimal
 from typing import List, Optional, Dict
-from sqlalchemy.orm import Session
-from sqlalchemy import desc, and_, select
 from db.models.request_history import RequestHistoryDB
 from db.models.user import UserDB
 from db.models.mlmodel import MLModelDB
@@ -13,8 +10,8 @@ from schemas.request_history import (
     RequestHistoryDetailRead,
 )
 
-from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
-from sqlalchemy import desc, and_, select
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy import select
 
 
 class RequestHistoryService:
@@ -72,7 +69,7 @@ class RequestHistoryService:
     async def complete_request(
         self,
         request_id: int,
-        output_data: str,
+        output_data: dict,
         metrics: Optional[str] = None,
         execution_time_ms: Optional[int] = None,
         cost: Optional[Decimal] = None,
