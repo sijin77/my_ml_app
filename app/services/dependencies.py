@@ -1,4 +1,5 @@
-from fastapi import Depends
+from pathlib import Path
+from fastapi import Depends, HTTPException
 from services.ml_queue_request_service import MLRequestOrchestratorService
 from services.user_roles_service import UserRolesService
 from services.user_service import UserService
@@ -9,6 +10,13 @@ from services.request_history_service import RequestHistoryService
 from services.transaction_service import TransactionService
 from db.session import AsyncSessionFactory
 from services.queue_service import QueueService
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
+from fastapi.templating import Jinja2Templates
+
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="api/v1/auth/token"
+)  # Укажите ваш эндпоинт для получения токена
 
 
 async def get_user_service():
@@ -17,6 +25,14 @@ async def get_user_service():
 
 async def get_user_roles_service():
     return UserRolesService(AsyncSessionFactory)
+
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, "SECRET_KEY", algorithms=["HS256"])
+        return payload
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Not authenticated")
 
 
 async def get_action_history_service():
@@ -50,3 +66,9 @@ def get_ml_orchestrator_service(
     queue_service: QueueService = Depends(get_queue_service),
 ) -> MLRequestOrchestratorService:
     return MLRequestOrchestratorService(request_service, queue_service)
+
+
+def get_templates():
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+    return templates

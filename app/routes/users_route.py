@@ -19,47 +19,14 @@ from services.user_service import UserService
 from services.user_roles_service import UserRolesService
 from schemas.user_roles import UserRoleCreate, UserRoleRead
 from schemas.user import (
-    UserCreate,
     UserRead,
-    UserLogin,
-    UserUpdate,
-    UserWithToken,
-    UserDetailRead,
-    UserActionRead,
 )
 
 router = APIRouter(prefix="/users", tags=["users"])
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/login")
-
-
-# routers.py
-@router.post("/signup", response_model=UserRead)
-async def register_user(
-    user_data: UserCreate, user_service: UserService = Depends(get_user_service)
-):
-    try:
-        return await user_service.register_user(user_data)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.post("/login", response_model=UserWithToken)
-async def login(
-    form_data: UserLogin,
-    user_service: UserService = Depends(get_user_service),
-):
-    try:
-        return await user_service.authenticate_user(
-            UserLogin(username=form_data.username, password=form_data.password)
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
 
 @router.post("/users/{user_id}/roles", response_model=UserRoleRead)
 async def assign_role(
-    user_id: int,
     role_data: UserRoleCreate,
     roles_service: UserRolesService = Depends(get_user_roles_service),
 ):

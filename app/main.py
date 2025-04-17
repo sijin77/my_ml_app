@@ -1,13 +1,15 @@
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 from fastapi import FastAPI
-
+from routes.chat import router as chat_router
+from routes.home import router as home_router
 from routes.db_setup import router as db_router
 from routes.users_route import router as users_router
 from routes.model_route import router as model_router
 from routes.transaction_route import router as transaction_router
-
-# from db.session import AsyncSessionFactory, init_db
-# from tests.seed_data import async_seed_and_test
+from fastapi.middleware.cors import CORSMiddleware
+from routes.auth_route import router as auth_router
 
 app = FastAPI(
     title="ML Model API",
@@ -16,42 +18,25 @@ app = FastAPI(
 )
 
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(chat_router)
+app.include_router(auth_router)
+app.include_router(home_router)
 app.include_router(users_router)
 app.include_router(model_router)
 app.include_router(transaction_router)
 app.include_router(db_router)
 
-
-@app.get(
-    "/",
-    summary="Информация о API",
-    response_description="Основная информация о доступных эндпоинтах",
-)
-async def root():
-    """Возвращает основную информацию о API и доступных эндпоинтах"""
-    return {
-        "app": "ML Model Management API",
-        "documentation": {
-            "swagger": "/api/docs",
-            "redoc": "/api/redoc",
-            "openapi_schema": "/api/openapi.json",
-        },
-    }
-
-
-# @app.on_event("startup")
-# async def on_startup():
-#     await init_db()
-#     await async_seed_and_test(AsyncSessionFactory)
-
-
-# @app.on_event("shutdown")
-# async def shutdown():
-#     """Закрытие соединений при завершении работы"""
-#     from db.session import async_engine
-
-#     await async_engine.dispose()
-
+BASE_DIR = Path(__file__).resolve().parent
+static_dir = BASE_DIR / "static"
+app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, workers=1)
