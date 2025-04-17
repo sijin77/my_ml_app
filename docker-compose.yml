@@ -9,7 +9,7 @@ services:
       - ./app:/app
     depends_on:
       - database
-      # - rabbitmq
+      - rabbitmq
 
   web-proxy:
     build: ./nginx
@@ -18,19 +18,45 @@ services:
       - "443:443"
     depends_on:
       - app
-  
-  # rabbitmq:
-  #   image: rabbitmq:management
-  #   ports:
-  #     - "15672:15672"
-  #     - "5672:5672"
-  #   volumes:
-  #     - rabbitmq_data:/var/lib/rabbitmq
-  #   environment:
-  #     RABBITMQ_DEFAULT_USER: "user"
-  #     RABBITMQ_DEFAULT_PASS: "user"
-  #   restart: on-failure
 
+  rabbitmq:
+    image: rabbitmq:3.13.1-management-alpine
+    hostname: rabbitmq
+    restart: unless-stopped
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit disk_free_limit 2147483648
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - "15672:15672"  # Management UI
+      - "5672:5672"    # AMQP protocol
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+
+  ml_service:
+    build: ./mlservice
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./mlservice:/app
+    environment:
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672/
+      - HF_MODEL_NAME=Qwen/Qwen2-VL-2B-Instruct
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+    restart: unless-stopped  
+  
   database:
     image: postgres:15
     env_file: .env
@@ -48,5 +74,9 @@ services:
 volumes:
   postgres_data:
     driver: local
-  # rabbitmq_data:
-  #   driver: local
+  rabbitmq_data:
+    driver: local
+  rabbitmq_logs:
+  
+  #docker-compose down -v
+  #docker-compose up -d --build
