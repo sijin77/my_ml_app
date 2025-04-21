@@ -18,3 +18,16 @@ async def deposit_funds(
         return await service.process_deposit(user_id, amount, description)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/transactions/withdraw")
+async def deposit_withdrawal(
+    user_id: int,
+    amount: Decimal,
+    description: Optional[str] = None,
+    service: TransactionService = Depends(get_transaction_service),
+):
+    try:
+        return await service.process_withdrawal(user_id, amount, description)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

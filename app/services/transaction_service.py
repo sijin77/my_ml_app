@@ -166,7 +166,7 @@ class TransactionService:
 
                     # Проверка баланса
                     if user.balance < amount:
-                        return None
+                        raise ValueError("Insufficient balance")
 
                     # Создаем транзакцию
                     transaction = await self._create_transaction_in_session(
@@ -180,13 +180,13 @@ class TransactionService:
                     )
 
                     # Обновляем баланс
-                    user.balance -= amount
+                    user.balance = user.balance - amount
 
                     # Завершаем транзакцию
                     transaction.status = "completed"
                     await session.flush()
                     await session.refresh(transaction, ["user"])
-
+                    await session.refresh(user)
                     return TransactionRead.model_validate(transaction)
             except Exception:
                 await session.rollback()

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}
+Чат с Ириской 🔥
+{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <style type="text/css">
+        #chat {
+            height: 400px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            overflow-y: scroll;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+        }
+        #messageInput {
+            width: 70%;
+            padding: 8px;
+        }
+        .btn-chat {
+            padding: 8px 15px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .message::before {
+            content: "";
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background: url('https://i.imgur.com/XYZ1234.png') no-repeat;
+            background-size: cover;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<h1>Чат с Ириской <span id="status">🔴</span></h1>
+
+{% if user %}
+    <div id="chat"></div>
+    <div>
+        <input id="messageInput" placeholder="Напиши {{ user }}..." autofocus>
+        <button class="btn-chat" onclick="sendMessage()">Отправить</button>
+        <button class="btn-chat" id="emojiBtn">🌶️</button>
+    </div>
+    <script src="{{ url_for('static', filename='chat.js') }}"></script>
+{% else %}
+    <p class="important">
+        Доступ к чату только для авторизованных пользователей.
+        <a href="/login" class="btn">Войти</a>
+    </p>
+{% endif %}
+
+<hr>
+{% endblock %}

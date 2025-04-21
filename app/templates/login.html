@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Login</h2>
+<form id="loginForm" data-csrf-token="{{ csrf_token if csrf_token else '' }}">
+    <div>
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+    </div>
+    <div>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+    </div>
+    <button type="submit">Login</button>
+</form>
+<div id="errorMessage" style="color: red;"></div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const loginForm = document.getElementById('loginForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const submitBtn = loginForm?.querySelector('button[type="submit"]');
+        
+        if (!loginForm || !submitBtn) return;
+
+        const originalBtnText = submitBtn.textContent;
+        const csrfToken = loginForm.dataset.csrfToken; // Получаем CSRF из data-атрибута
+
+        // Валидация формы перед отправкой
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            console.log('начало')
+            // Визуальная индикация загрузки
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Processing...
+            `;
+
+            // Сбор данных формы
+            const formData = {
+                username: document.getElementById('username').value.trim(),
+                password: document.getElementById('password').value.trim()
+            };
+            console.log(formData)
+            // Базовая валидация на клиенте
+            if (!formData.username || !formData.password) {
+                showError('Please fill in all fields');
+                resetSubmitButton();
+                return;
+            }
+            // Формируем заголовки
+             const headers = {
+                    'Content-Type': 'application/json'
+                };
+
+                // Добавляем CSRF-токен если есть
+            if (csrfToken) {
+                    headers['X-CSRF-Token'] = csrfToken;
+                }
+                console.log(headers)
+            try {
+               
+                console.log('до fetch')
+                const response = await fetch('{{ url_for("login") }}', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(formData),
+                    credentials: 'include' // Для работы с httpOnly cookies
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Login failed');
+                }
+
+                // Обработка успешного входа
+                handleSuccessfulLogin(data);
+
+            } catch (error) {
+                showError(error.message);
+                console.error('Login error:', error);
+            } finally {
+                resetSubmitButton();
+            }
+        });
+
+        function handleSuccessfulLogin(data) {
+            // HttpOnly cookie будет установлен сервером автоматически
+            // Перенаправление
+            window.location.href = data.redirect_url || '{{ url_for("chat") }}';
+        }
+
+        function resetSubmitButton() {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalBtnText;
+        }
+
+        function showError(message) {
+            if (!errorMessage) return;
+            
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            
+            // Автоскрытие ошибки через 5 сек
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        // Очистка ошибки при новом вводе
+        const inputs = loginForm.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                if (errorMessage) {
+                    errorMessage.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
