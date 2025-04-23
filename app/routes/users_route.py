@@ -7,10 +7,12 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from services.request_history_service import RequestHistoryService
+from services.transaction_service import TransactionService
 from services.dependencies import (
     get_request_history_service,
     get_user_service,
     get_user_roles_service,
+    get_transaction_service,
 )
 from services.user_action_history_service import UserActionHistoryService
 from db.models.user import UserDB
@@ -19,13 +21,14 @@ from services.user_service import UserService
 from services.user_roles_service import UserRolesService
 from schemas.user_roles import UserRoleCreate, UserRoleRead
 from schemas.user import (
+    TransactionRead,
     UserRead,
 )
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.post("/users/{user_id}/roles", response_model=UserRoleRead)
+@router.post("/{user_id}/roles", response_model=UserRoleRead)
 async def assign_role(
     role_data: UserRoleCreate,
     roles_service: UserRolesService = Depends(get_user_roles_service),
@@ -36,7 +39,7 @@ async def assign_role(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/users/{user_id}", response_model=UserRead)
+@router.post("/{user_id}", response_model=UserRead)
 async def get_user_info(
     user_id: int,
     user_service: UserService = Depends(get_user_service),
@@ -47,7 +50,18 @@ async def get_user_info(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/users/{user_id}/stats", response_model=Dict[str, Decimal])
+@router.get("/{user_id}/transactions", response_model=List[TransactionRead])
+async def user_transactions(
+    user_id: int,
+    transaction_service: TransactionService = Depends(get_transaction_service),
+):
+    try:
+        return await transaction_service.get_user_transactions(user_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/{user_id}/stats", response_model=Dict[str, Decimal])
 async def get_user_stats(
     user_id: int,
     request_service: RequestHistoryService = Depends(get_request_history_service),
@@ -58,7 +72,7 @@ async def get_user_stats(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-# @router.post("/users/{user_id}/actions/log")
+# @router.post("/{user_id}/actions/log")
 # async def log_user_action(
 #     user_id: int,
 #     action_type: str,

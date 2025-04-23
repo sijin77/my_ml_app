@@ -42,6 +42,6 @@ async def login(
             UserLogin(username=form_data.username, password=form_data.password)
         )
         # Убедитесь, что ваш UserWithToken содержит token
-        return JSONResponse(content=user)
+        return user
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

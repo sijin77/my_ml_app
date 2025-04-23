@@ -77,8 +77,7 @@ class UserService:
             if not user or not self._verify_password(
                 login_data.password, user.password_hash
             ):
-                return None
-
+                raise ValueError("Неверный логин или пароль")
             access_token = self._create_access_token(user.id)
             user_data = UserRead.model_validate(user)
 

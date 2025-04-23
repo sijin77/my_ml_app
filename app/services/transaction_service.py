@@ -130,6 +130,11 @@ class TransactionService:
         async with self.async_session_factory() as session:
             try:
                 async with session.begin():
+                    # Проверка существования пользователя
+                    user = await session.get(UserDB, user_id)
+                    if not user:
+                        raise ValueError("User not found")
+
                     # Создаем транзакцию
                     transaction = await self._create_transaction_in_session(
                         session,
