@@ -1,18 +1,60 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    {% block head %}
-    <link rel="stylesheet" href="/static/style.css" />
-    <title>{% block title %}{% endblock %} - My Webpage</title>
-    {% endblock %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat - Умный чат-помощник</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-    <div id="content">{% block content %}{% endblock %}</div>
-    <div id="footer">
-        {% include '_site_map.html' %} </br>
-        {% block footer %}
-        &copy; Copyright 2024 by <a href="http://domain.lucky/">you</a>.
- {% endblock %}
-    </div>
+    <header class="main-header">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                <span>AI Chat</span>
+            </div>
+            <nav class="main-nav">
+                <a href="/" class="nav-link active">Главная</a>
+                <a href="/about" class="nav-link">О проекте</a>
+                <a href="/chat" class="nav-link">Чат</a>
+                {% if user %}
+                <a href="/profile" class="nav-link">Профиль</a>
+                {% else %}
+                <a href="/login" class="nav-link">Войти</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    {% block content %}{% endblock %}
+    {% block footer %}
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>AI Chat</h3>
+                    <p>Умный помощник для ваших задач</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Контакты</h3>
+                    <p>email: support@aichat.example</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Соцсети</h3>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-telegram"></i></a>
+                        <a href="#"><i class="fab fa-vk"></i></a>
+                        <a href="#"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2023 AI Chat. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+    {% endblock %}
 </body>
 </html>

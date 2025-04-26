@@ -1,122 +1,124 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Login</h2>
-<form id="loginForm" data-csrf-token="{{ csrf_token if csrf_token else '' }}">
-    <div>
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required>
-    </div>
-    <div>
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required>
-    </div>
-    <button type="submit">Login</button>
-</form>
-<div id="errorMessage" style="color: red;"></div>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const loginForm = document.getElementById('loginForm');
-        const errorMessage = document.getElementById('errorMessage');
-        const submitBtn = loginForm?.querySelector('button[type="submit"]');
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fas fa-sign-in-alt auth-icon"></i>
+            <h1>Вход в AI Chat</h1>
+        </div>
         
-        if (!loginForm || !submitBtn) return;
+        {% if error %}
+        <div class="auth-error">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>{{ error }}</span>
+        </div>
+        {% endif %}
+        
+        <form id="loginForm" action="/login" method="post" class="auth-form">
+            <div class="form-group">
+                <label for="username">
+                    <i class="fas fa-user"></i> Имя пользователя
+                </label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    name="username" 
+                    required
+                    placeholder="Введите ваш логин"
+                    autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">
+                    <i class="fas fa-lock"></i> Пароль
+                </label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    required
+                    placeholder="Введите ваш пароль"
+                    autocomplete="current-password"
+                    aria-label="Пароль"
+                    data-lpignore="true"  
+                    readonly
+                    onfocus="this.removeAttribute('readonly')">
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">
+                <i class="fas fa-sign-in-alt"></i> Войти
+            </button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>Нет аккаунта? <a href="/signup" class="auth-link">Создайте его</a></p>
+            <a href="/forgot-password" class="auth-link">Забыли пароль?</a>
+        </div>
+    </div>
+</div>
 
-        const originalBtnText = submitBtn.textContent;
-        const csrfToken = loginForm.dataset.csrfToken; // Получаем CSRF из data-атрибута
-
-        // Валидация формы перед отправкой
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            console.log('начало')
-            // Визуальная индикация загрузки
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const loginForm = document.getElementById('loginForm');
+    
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(loginForm);
+        const submitBtn = loginForm.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        
+        try {
+            // Показываем индикатор загрузки
             submitBtn.disabled = true;
-            submitBtn.innerHTML = `
-                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                Processing...
-            `;
-
-            // Сбор данных формы
-            const formData = {
-                username: document.getElementById('username').value.trim(),
-                password: document.getElementById('password').value.trim()
-            };
-            console.log(formData)
-            // Базовая валидация на клиенте
-            if (!formData.username || !formData.password) {
-                showError('Please fill in all fields');
-                resetSubmitButton();
-                return;
-            }
-            // Формируем заголовки
-             const headers = {
-                    'Content-Type': 'application/json'
-                };
-
-                // Добавляем CSRF-токен если есть
-            if (csrfToken) {
-                    headers['X-CSRF-Token'] = csrfToken;
-                }
-                console.log(headers)
-            try {
-               
-                console.log('до fetch')
-                const response = await fetch('{{ url_for("login") }}', {
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify(formData),
-                    credentials: 'include' // Для работы с httpOnly cookies
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.detail || 'Login failed');
-                }
-
-                // Обработка успешного входа
-                handleSuccessfulLogin(data);
-
-            } catch (error) {
-                showError(error.message);
-                console.error('Login error:', error);
-            } finally {
-                resetSubmitButton();
-            }
-        });
-
-        function handleSuccessfulLogin(data) {
-            // HttpOnly cookie будет установлен сервером автоматически
-            // Перенаправление
-            window.location.href = data.redirect_url || '{{ url_for("chat") }}';
-        }
-
-        function resetSubmitButton() {
-            submitBtn.disabled = false;
-            submitBtn.textContent = originalBtnText;
-        }
-
-        function showError(message) {
-            if (!errorMessage) return;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Вход...';
             
-            errorMessage.textContent = message;
-            errorMessage.style.display = 'block';
-            
-            // Автоскрытие ошибки через 5 сек
-            setTimeout(() => {
-                errorMessage.style.display = 'none';
-            }, 5000);
-        }
-
-        // Очистка ошибки при новом вводе
-        const inputs = loginForm.querySelectorAll('input');
-        inputs.forEach(input => {
-            input.addEventListener('input', () => {
-                if (errorMessage) {
-                    errorMessage.style.display = 'none';
-                }
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    username: formData.get('username'),
+                    password: formData.get('password')
+                })
             });
-        });
+            
+            if (response.ok) {
+                window.location.href = '/chat';
+            } else {
+                const errorData = await response.json();
+                showAuthError(errorData.detail || 'Неверные учетные данные');
+            }
+        } catch (err) {
+            console.error('Ошибка сети:', err);
+            showAuthError('Ошибка соединения с сервером');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        }
     });
+    
+    function showAuthError(message) {
+        const errorElement = document.createElement('div');
+        errorElement.className = 'auth-error';
+        errorElement.innerHTML = `
+            <i class="fas fa-exclamation-circle"></i>
+            <span>${message}</span>
+        `;
+        
+        const existingError = document.querySelector('.auth-error');
+        if (existingError) {
+            existingError.replaceWith(errorElement);
+        } else {
+            const authHeader = document.querySelector('.auth-header');
+            authHeader.insertAdjacentElement('afterend', errorElement);
+        }
+        
+        // Анимация появления
+        errorElement.style.animation = 'fadeIn 0.3s ease-out';
+    }
+});
 </script>
 {% endblock %}

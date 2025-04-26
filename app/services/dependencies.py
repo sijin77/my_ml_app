@@ -1,5 +1,6 @@
+from datetime import datetime
 from pathlib import Path
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Response
 from services.ml_queue_request_service import MLRequestOrchestratorService
 from services.user_roles_service import UserRolesService
 from services.user_service import UserService
@@ -17,6 +18,11 @@ from fastapi.templating import Jinja2Templates
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="api/v1/auth/token"
 )  # Укажите ваш эндпоинт для получения токена
+
+
+def get_response() -> Response:
+    # FastAPI автоматически подставит реальный Response
+    return Response()
 
 
 async def get_user_service():
@@ -71,4 +77,7 @@ def get_ml_orchestrator_service(
 def get_templates():
     BASE_DIR = Path(__file__).resolve().parent.parent
     templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+    templates.env.filters["datetimeformat"] = lambda value: datetime.fromisoformat(
+        value
+    ).strftime("%H:%M:%S")
     return templates

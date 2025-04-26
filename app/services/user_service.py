@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from typing import List, Optional
 from passlib.context import CryptContext
-from jose import jwt
+from jose import ExpiredSignatureError, JWTError, jwt
 from sqlalchemy import insert, select
 from db.models.user import UserDB
 from db.models.user_action_history import UserActionHistoryDB, ActionTypeDB
@@ -92,6 +92,39 @@ class UserService:
             return UserWithToken(
                 **user_data.model_dump(), access_token=access_token, token_type="bearer"
             )
+
+    async def get_current_user(self, token: str) -> Optional[UserRead]:
+        try:
+            # Удаляем 'Bearer ' если есть
+            token = token.replace("Bearer ", "").strip()
+
+            payload = jwt.decode(
+                token,
+                SECRET_KEY,
+                algorithms=[ALGORITHM],
+                options={"verify_exp": True},  # Проверка срока действия
+            )
+
+            user_id = payload.get("sub")
+            if not user_id:
+                return None
+
+            async with self.async_session_factory() as session:
+                result = await session.execute(
+                    select(UserDB).where(UserDB.id == int(user_id))
+                )
+                user = result.scalars().first()
+                return UserRead.model_validate(user) if user else None
+
+        except ExpiredSignatureError:
+            print("Token expired")  # Логирование
+            return None
+        except JWTError as e:
+            print(f"JWT Error: {str(e)}")  # Логирование
+            return None
+        except Exception as e:
+            print(f"Unexpected error: {str(e)}")  # Логирование
+            return None
 
     async def get_user_by_id(self, user_id: int) -> Optional[UserRead]:
         async with self.async_session_factory() as session:

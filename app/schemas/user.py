@@ -60,6 +60,10 @@ class UserLogin(BaseModel):
     password: str
 
 
+class TokenData(BaseModel):
+    username: str | None = None
+
+
 # DTO для ответа с токеном
 class UserWithToken(UserRead):
     access_token: str
