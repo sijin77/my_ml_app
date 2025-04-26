@@ -13,7 +13,7 @@
    cd ваш-репозиторий
 
 2. Создайте файл .env в корне проекта и заполните его:
-   DB_NAME=your_db_name
+   DB_NAME=your_db_name <br>
    DB_USER=your_db_user
    DB_PASS=your_db_password
    RABBITMQ_USER=your_rabbit_user
