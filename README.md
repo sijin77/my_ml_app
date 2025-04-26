@@ -9,7 +9,7 @@
 ## Установка и запуск
 1. Клонируйте репозиторий:
    ```bash
-   git clone https://github.com/ваш-username/ваш-репозиторий.git
+   git clone https://github.com/sijin77/my_ml_app.git
    cd ваш-репозиторий
 
 2. Создайте файл .env в корне проекта и заполните его:
