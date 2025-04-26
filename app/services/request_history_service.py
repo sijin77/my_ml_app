@@ -11,7 +11,7 @@ from schemas.request_history import (
 )
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlalchemy import select
+from sqlalchemy import desc, select
 
 
 class RequestHistoryService:
@@ -124,7 +124,7 @@ class RequestHistoryService:
             result = await session.execute(
                 select(RequestHistoryDB)
                 .where(RequestHistoryDB.user_id == user_id)
-                .order_by(RequestHistoryDB.created_at)
+                .order_by(desc(RequestHistoryDB.created_at))
                 .limit(limit)
             )
             requests = result.scalars().all()

@@ -7,6 +7,7 @@ from routes.home import router as home_router
 from routes.db_setup import router as db_router
 from routes.users_route import router as users_router
 from routes.model_route import router as model_router
+from routes.profile import router as profile_router
 from routes.transaction_route import router as transaction_router
 from fastapi.middleware.cors import CORSMiddleware
 from routes.auth_route import router as auth_router
@@ -27,6 +28,7 @@ app.add_middleware(
 )
 
 app.include_router(chat_router)
+app.include_router(profile_router)
 app.include_router(auth_router)
 app.include_router(home_router)
 app.include_router(users_router)

@@ -1,38 +1,74 @@
 {% extends "base.html" %}
 
-{% block title %}
-Home page!!!
-{% endblock %}
-
-{% block head %}
-    {{ super() }}
-    <style type="text/css">
-        .important { color: #336699; }
-    </style>
-{% endblock %}
-
 {% block content %}
-<h1>Home page! 🏡</h1>
+<div class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title">Общайтесь с ИИ легко и просто</h1>
+            <p class="hero-subtitle">AI Chat - ваш умный помощник для решения задач, ответов на вопросы и творческой работы</p>
+            
+            <div class="hero-features">
+                <div class="feature-card">
+                    <i class="fas fa-bolt feature-icon"></i>
+                    <h3>Быстро</h3>
+                    <p>Мгновенные ответы на ваши вопросы</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-brain feature-icon"></i>
+                    <h3>Умно</h3>
+                    <p>Продвинутые алгоритмы ИИ</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-lock feature-icon"></i>
+                    <h3>Безопасно</h3>
+                    <p>Ваши данные защищены</p>
+                </div>
+            </div>
 
-<p class="important">
-    Welcome to my awesome homepage.
-</p>
+            <div class="cta-buttons">
+                {% if user %}
+                    <a href="/chat" class="btn btn-primary btn-large">
+                        <i class="fas fa-comments"></i> Перейти в чат
+                    </a>
+                    <a href="/profile" class="btn btn-secondary btn-large">
+                        <i class="fas fa-user"></i> Мой профиль
+                    </a>
+                {% else %}
+                    <a href="/login" class="btn btn-primary btn-large">
+                        <i class="fas fa-sign-in-alt"></i> Войти
+                    </a>
+                    <a href="/register" class="btn btn-secondary btn-large">
+                        <i class="fas fa-user-plus"></i> Регистрация
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="hero-image">
+            <img src="/static/images/ai-chat-hero.png" alt="AI Chat Interface" class="hero-img">
+        </div>
+    </div>
+</div>
 
-{% if user %}
-    <h2>You are logged in :)</h2>
-    <p>
-        Hi {{ user }}! You are logged in, so you can access the private 
-        page.
-        <a href="/private" class="btn">Перейти в чат</a>
-    </p>
-{% else %}
-    <h2>You are NOT logged in :(</h2>
-    <p>
-        Hello stranger. You are not logged. Please follow the link to
-        <a href="/login" class="btn">login</a>!
-    </p>
-{% endif %}
-
-<hr>
-
+<div class="how-it-works">
+    <div class="container">
+        <h2 class="section-title">Как это работает</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>Зарегистрируйтесь</h3>
+                <p>Создайте аккаунт за пару минут</p>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>Задайте вопрос</h3>
+                <p>Напишите ваш запрос в чат</p>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>Получите ответ</h3>
+                <p>ИИ обработает запрос и даст развернутый ответ</p>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

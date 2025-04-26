@@ -101,7 +101,7 @@ class MLRequestOrchestratorService:
             output_data=response.get("output_data"),
             metrics=json.dumps(response.get("metrics", {})),
             execution_time_ms=response.get("execution_time_ms"),
-            cost=Decimal(str(response.get("cost", 0))),
+            cost=Decimal(0.01),
         )
 
     async def _handle_failed_response(

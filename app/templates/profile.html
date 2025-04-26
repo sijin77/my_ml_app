@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="container">
+        <h1 class="profile-title">Личный кабинет</h1>
+        
+        <div class="tabs">
+            <div class="tabs-header">
+                <button class="tab-btn {% if active_tab == 'profile' %}active{% endif %}" data-tab="profile">
+                    <i class="fas fa-user"></i> Профиль
+                </button>
+                <button class="tab-btn {% if active_tab == 'ml-requests' %}active{% endif %}" data-tab="ml-requests">
+                    <i class="fas fa-history"></i> История запросов
+                </button>
+                <button class="tab-btn {% if active_tab == 'transactions' %}active{% endif %}" data-tab="transactions">
+                    <i class="fas fa-exchange-alt"></i> Транзакции
+                </button>
+            </div>
+            
+            <div class="tabs-content">
+                <!-- Вкладка профиля -->
+                <div class="tab-pane {% if active_tab == 'profile' %}active{% endif %}" id="profile-tab">
+                    <div class="profile-card">
+                        <div class="profile-header">
+                            <div class="profile-avatar">
+                                {{ user.username[0]|upper }}
+                            </div>
+                            <h2>{{ user.username }}</h2>
+                            <div class="profile-badge">
+                                <i class="fas fa-star"></i> Стандартный аккаунт
+                            </div>
+                        </div>
+                        
+                        <div class="profile-details">
+                            <div class="detail-item">
+                                <i class="fas fa-envelope"></i>
+                                <div>
+                                    <span class="detail-label">Email</span>
+                                    <span class="detail-value">{{ user.email }}</span>
+                                </div>
+                            </div>
+                            
+
+                            
+                            <div class="detail-item">
+                                <i class="fas fa-coins"></i>
+                                <div>
+                                    <span class="detail-label">Баланс</span>
+                                    <span class="detail-value">{{ user.balance }} токенов</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Вкладка истории запросов -->
+                <div class="tab-pane {% if active_tab == 'ml-requests' %}active{% endif %}" id="ml-requests-tab">
+                    <div class="requests-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-history"></i> История запросов</h2>
+                        </div>
+                        
+                        <div class="requests-list" id="ml-requests-list">
+                            <div class="empty-state">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Загрузка данных...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Вкладка истории транзакций -->
+                <div class="tab-pane {% if active_tab == 'transactions' %}active{% endif %}" id="transactions-tab">
+                    <div class="transactions-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-exchange-alt"></i> История транзакций</h2>
+                        </div>
+                        
+                        <div class="transactions-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Дата</th>
+                                        <th>Тип</th>
+                                        <th>Сумма</th>
+                                        <th>Описание</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactions-body">
+                                    <tr>
+                                        <td colspan="4" class="empty-table">
+                                            <div class="empty-state">
+                                                <i class="fas fa-spinner fa-spin"></i>
+                                                <p>Загрузка данных...</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Переключение вкладок
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+            
+            // Обновляем активные кнопки
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Обновляем активные панели
+            tabPanes.forEach(pane => pane.classList.remove('active'));
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+            
+            // Обновляем URL
+            window.history.pushState(null, null, `#${tabId}`);
+            
+            // Загружаем данные при переключении вкладок
+            if (tabId === 'ml-requests') {
+                loadMLRequests();
+            } else if (tabId === 'transactions') {
+                loadTransactions();
+            }
+        });
+    });
+    
+    // Обработка начального хэша
+    if (window.location.hash) {
+        const tabId = window.location.hash.substring(1);
+        const tabButton = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+        if (tabButton) tabButton.click();
+    } else {
+        // Загружаем данные для активной вкладки
+        const activeTab = document.querySelector('.tab-btn.active').getAttribute('data-tab');
+        if (activeTab === 'ml-requests') {
+            loadMLRequests();
+        } else if (activeTab === 'transactions') {
+            loadTransactions();
+        }
+    }
+
+    // Функция загрузки истории ML запросов
+    async function loadMLRequests() {
+        try {
+            const mlRequestsList = document.getElementById('ml-requests-list');
+            mlRequestsList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Загрузка данных...</p>
+                </div>
+            `;
+            
+            const response = await fetch('/api/profile/ml-requests');
+            if (!response.ok) throw new Error('Ошибка загрузки данных');
+            
+            const data = await response.json();
+            
+            if (data.length === 0) {
+                mlRequestsList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>Нет данных о запросах</p>
+                    </div>
+                `;
+                return;
+            }
+
+            mlRequestsList.innerHTML = data.map(request => `
+                <div class="request-item">
+                    <div class="request-header">
+                        <span class="request-date">${formatDate(request.created_at)}</span>
+                    </div>
+                    <div class="request-content">
+                        <div class="request-question">
+                            <strong>Запрос:</strong> ${request.input || 'Нет данных'}
+                        </div>
+                        <div class="request-answer">
+                            <strong>Ответ:</strong> ${request.response || 'Нет данных'}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            document.getElementById('ml-requests-list').innerHTML = `
+                <div class="empty-state error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <p>Ошибка загрузки данных: ${error.message}</p>
+                </div>
+            `;
+            console.error('Ошибка загрузки ML запросов:', error);
+        }
+    }
+
+    // Функция загрузки транзакций
+    async function loadTransactions() {
+        try {
+            const transactionsBody = document.getElementById('transactions-body');
+            transactionsBody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="empty-table">
+                        <div class="empty-state">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Загрузка данных...</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            
+            const response = await fetch('/api/profile/transactions');
+            if (!response.ok) throw new Error('Ошибка загрузки данных');
+            
+            const data = await response.json();
+            
+            if (data.length === 0) {
+                transactionsBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="empty-table">
+                            <div class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <p>Нет данных о транзакциях</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            transactionsBody.innerHTML = data.map(tx => `
+                <tr>
+                    <td>${formatDate(tx.created_at)}</td>
+                    <td>
+                        <span class="tx-type ${tx.amount > 0 ? 'credit' : 'debit'}">
+                            ${tx.amount > 0 ? 'Пополнение' : 'Списание'}
+                        </span>
+                    </td>
+                    <td class="${tx.amount > 0 ? 'positive' : 'negative'}">
+                        ${tx.amount}
+                    </td>
+                    <td>${tx.description || 'Нет описания'}</td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            document.getElementById('transactions-body').innerHTML = `
+                <tr>
+                    <td colspan="4" class="empty-table error">
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>Ошибка загрузки данных: ${error.message}</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            console.error('Ошибка загрузки транзакций:', error);
+        }
+    }
+
+    // Функция форматирования даты
+    function formatDate(dateString) {
+        if (!dateString) return 'Нет данных';
+        try {
+            return new Date(dateString).toLocaleString();
+        } catch (e) {
+            console.error('Ошибка форматирования даты:', e);
+            return dateString;
+        }
+    }
+});
+</script>
+{% endblock %}
