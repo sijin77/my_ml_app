@@ -13,21 +13,21 @@
    cd ваш-репозиторий
 
 2. Создайте файл .env в корне проекта и заполните его:
-   DB_NAME=your_db_name <br>
-   DB_USER=your_db_user
-   DB_PASS=your_db_password
-   RABBITMQ_USER=your_rabbit_user
-   RABBITMQ_PASSWORD=your_rabbit_password
+- DB_NAME=your_db_name <br>
+- DB_USER=your_db_user
+- DB_PASS=your_db_password
+- RABBITMQ_USER=your_rabbit_user
+- RABBITMQ_PASSWORD=your_rabbit_password
 
 3. Запустите проект:
 docker-compose up -d --build
 
 
 ## Сервисы будут доступны:
-   Основное приложение: http://localhost
-   RabbitMQ Management: http://localhost:15672
-   ML Service: http://localhost:8000
-   PostgreSQL: localhost:5432
+  - Основное приложение: http://localhost
+  - RabbitMQ Management: http://localhost:15672
+  - ML Service: http://localhost:8000
+  - PostgreSQL: localhost:5432
 
 ## Остановка с сохранением данных:
 docker-compose down
